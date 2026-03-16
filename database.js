@@ -2,28 +2,33 @@
 require('dotenv').config(); // Load environment variables
 const mysql = require('mysql2');
 
-// ================== CREATE MYSQL CONNECTION ==================
-const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'your-cloud-db-host',       // e.g., db123.railway.app
-  user: process.env.DB_USER || 'your-db-username',         // your MySQL username
-  password: process.env.DB_PASSWORD || 'your-db-password', // your MySQL password
-  database: process.env.DB_NAME || 'your-database-name',   // your MySQL database name
-  port: process.env.DB_PORT || 3306
+// ================== CREATE MYSQL CONNECTION POOL ==================
+const db = mysql.createPool({
+  host: process.env.DB_HOST || 'your-cloud-db-host',
+  user: process.env.DB_USER || 'your-db-username',
+  password: process.env.DB_PASSWORD || 'your-db-password',
+  database: process.env.DB_NAME || 'your-database-name',
+  port: process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelayMs: 0
 });
 
-// Connect to MySQL
-db.connect((err) => {
+// Test connection
+db.getConnection((err, connection) => {
   if (err) {
     console.error('Error connecting to MySQL:', err.message);
-    process.exit(1); // stop the server if DB connection fails
+    process.exit(1);
   } else {
     console.log('Connected to MySQL database!');
+    connection.release();
   }
 });
 
 // ================== CREATE TABLES IF NOT EXIST ==================
 const createTables = () => {
-
   // ================= USERS TABLE =================
   const usersTable = `
     CREATE TABLE IF NOT EXISTS users (
